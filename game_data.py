@@ -41,7 +41,39 @@ def load_quests(filename="data/quests.txt"):
     # - FileNotFoundError → raise MissingDataFileError
     # - Invalid format → raise InvalidDataFormatError
     # - Corrupted/unreadable data → raise CorruptedDataError
-    pass
+    try:
+        with open(filename, 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        raise MissingDataFileError(f"Quest file is not found: {filename}")
+    except Exception:
+        raise CorruptedDataError(f"Quest file is unreadable: {filename}")
+    
+    quest = {}
+    current_block = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped == "":
+            if current_block:
+                quest_dict = parse_quest_block(current_block)
+                validate_quest_data(quest_dict)
+                quest[quest_dict['quest_id']] = quest_dict
+                current_block = []
+        else:
+            current_block.append(stripped)
+    
+    if current_block:
+        quest_dict = parse_quest_block(current_block)
+        validate_quest_data(quest_dict)
+        quest[quest_dict['quest_id']] = quest_dict
+
+    return quest
+
+
+
+
+
 
 def load_items(filename="data/items.txt"):
     """
@@ -60,7 +92,10 @@ def load_items(filename="data/items.txt"):
     """
     # TODO: Implement this function
     # Must handle same exceptions as load_quests
-    pass
+
+    
+
+
 
 def validate_quest_data(quest_dict):
     """
@@ -75,7 +110,28 @@ def validate_quest_data(quest_dict):
     # TODO: Implement validation
     # Check that all required keys exist
     # Check that numeric values are actually numbers
-    pass
+    
+    required_fields = [
+        "quest_id",
+        "title",
+        "description",
+        "reward_xp",
+        "reward_gold",
+        "required_level",
+        "prerequisite"
+    ]
+    #checking for required fields
+    for field in required_fields:
+        if field not in quest_dict:
+            raise InvalidDataFormatError(f"Missing field in quest: {field}")
+        
+    numeric_fields = ["reward_xp", "reward_gold", "required_level"]
+
+    for key in numeric_fields:
+        if not isinstance(quest_dict[key], int):
+            raise InvalidDataFormatError(f"Field {key} must be an integer")
+    return True
+
 
 def validate_item_data(item_dict):
     """
@@ -119,7 +175,33 @@ def parse_quest_block(lines):
     # Split each line on ": " to get key-value pairs
     # Convert numeric strings to integers
     # Handle parsing errors gracefully
-    pass
+    
+    quest = {}
+
+    for line in lines:
+        if ":" not in line:
+            raise InvalidDataFormatError(f"Quest line missing ':' seperator")
+        
+        key, value = line.split(":", 1)
+
+        key = key.strip().lower()
+        value = value.strip()
+
+        quest[key] = value
+
+    try:
+        quest["reward_xp"] = int(quest["reward_xp"])
+        quest["reward_gold"] = int(quest["reward_gold"])
+        quest["required_level"] = int(quest["required_level"])
+    except Exception:
+        raise InvalidDataFormatError("Quest numeric field is invalid")
+    return quest
+    # TODO: Implement parsing logic
+    # Split each line on ": " to get key-value pairs
+    # Convert numeric strings to integers
+    # Handle parsing errors gracefully
+
+
 
 def parse_item_block(lines):
     """
