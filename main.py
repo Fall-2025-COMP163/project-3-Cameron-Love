@@ -72,9 +72,7 @@ def new_game():
     - Character class
     
     Creates character and starts game loop
-    """
-    global current_character
-    
+    """    
     # TODO: Implement new game creation
     # Get character name from user
     # Get character class from user
@@ -199,10 +197,7 @@ def game_loop():
     """
     Main game loop - shows game menu and processes actions
     """
-    global game_running, current_character
-    
-    game_running = True
-    
+
     # TODO: Implement game loop
     # While game_running:
     #   Display game menu
@@ -383,9 +378,7 @@ def view_inventory():
 
 
 def quest_menu():
-    """Quest management menu"""
-    global current_character, all_quests
-    
+    """Quest management menu"""    
     # TODO: Implement quest menu
     # Show:
     #   1. View Active Quests
@@ -490,9 +483,7 @@ def quest_menu():
         print("Invalid choice. Please choose between 1 and 7.")
 
 def explore():
-    """Find and fight random enemies"""
-    global current_character
-    
+    """Find and fight random enemies"""    
     # TODO: Implement exploration
     # Generate random enemy based on character level
     # Start combat with combat_system.SimpleBattle
@@ -536,9 +527,7 @@ def explore():
 
 
 def shop():
-    """Shop menu for buying/selling items"""
-    global current_character, all_items
-    
+    """Shop menu for buying/selling items"""    
     # TODO: Implement shop
     # Show available items for purchase
     # Show current gold
