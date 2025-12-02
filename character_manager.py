@@ -242,7 +242,25 @@ def list_saved_characters(save_directory="data/save_games"):
     # TODO: Implement this function
     # Return empty list if directory doesn't exist
     # Extract character names from filenames
-    pass
+    
+    #If directory doesn't exist, no saved characters
+    if not os.path.exists(save_directory):
+        return []
+
+    characters = []
+
+    #Loop through all files in directory
+    for filename in os.listdir(save_directory):
+
+    #Only include files that end with _save.txt
+        if filename.endswith("_save.txt"):
+            # Remove the suffix to get just the name
+            character_name = filename.replace("_save.txt", "")
+            characters.append(character_name)
+
+    return characters
+
+
 
 def delete_character(character_name, save_directory="data/save_games"):
     """
@@ -253,7 +271,22 @@ def delete_character(character_name, save_directory="data/save_games"):
     """
     # TODO: Implement character deletion
     # Verify file exists before attempting deletion
-    pass
+    
+    #Build the save file path
+    filename = f"{character_name}_save.txt"
+    file_path = os.path.join(save_directory, filename)
+
+    #Check if file exists
+    if not os.path.exists(file_path):
+        raise CharacterNotFoundError(f"No save file found for {character_name}")
+
+    try:
+        os.remove(file_path)
+        return True
+
+    except Exception:
+        #Rare: file exists but cannot be deleted (permissions etc.)
+        raise SaveFileCorruptedError(f"Could not delete save file for {character_name}")
 
 # ============================================================================
 # CHARACTER OPERATIONS
@@ -278,7 +311,36 @@ def gain_experience(character, xp_amount):
     # Add experience
     # Check for level up (can level up multiple times)
     # Update stats on level up
-    pass
+    
+    #Check if character is dead
+    if character["health"] <= 0:
+        raise CharacterDeadError("Cannot gain XP while dead.")
+
+    #Add XP
+    character["experience"] += xp_amount
+
+#Player will continue leveling up as long as XP meets requirement
+    while True:
+        required_xp = character["level"] * 100
+
+        #If the player does not have enough XP the loop will stop
+        if character["experience"] < required_xp:
+            break
+
+        #Use up the XP required for level-up
+        character["experience"] -= required_xp
+
+        #Level up
+        character["level"] += 1
+        character["max_health"] += 10
+        character["strength"] += 2
+        character["magic"] += 2
+
+        #Restores health on level up
+        character["health"] = character["max_health"]
+
+    return character
+
 
 def add_gold(character, amount):
     """
@@ -294,7 +356,19 @@ def add_gold(character, amount):
     # TODO: Implement gold management
     # Check that result won't be negative
     # Update character's gold
-    pass
+    
+    #Calculate new gold amount
+    new_gold_total = character["gold"] + amount
+
+    #Don't allow negative gold
+    if new_gold_total < 0:
+        raise ValueError("Gold cannot go below zero.")
+
+    #Updates gold to new amount
+    character["gold"] = new_gold_total
+
+    return new_gold_total
+
 
 def heal_character(character, amount):
     """
@@ -316,7 +390,9 @@ def is_character_dead(character):
     Returns: True if dead, False if alive
     """
     # TODO: Implement death check
-    pass
+    
+    return character["health"] <= 0
+
 
 def revive_character(character):
     """
@@ -326,7 +402,12 @@ def revive_character(character):
     """
     # TODO: Implement revival
     # Restore health to half of max_health
-    pass
+    #If not dead, nothing to do
+    if character["health"] > 0:
+        return False
+
+    #Revive at half max health
+    character["health"] = character["max_health"] // 2
 
 # ============================================================================
 # VALIDATION
