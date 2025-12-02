@@ -425,8 +425,12 @@ def display_quest_info(quest_data):
     # TODO: Implement quest display
     print(f"\n=== {quest_data['title']} ===")
     print(f"Description: {quest_data['description']}")
-    # ... etc
-    pass
+    print(f"Required Level: {quest_data['required_level']}")
+    print(f"Prerequisite: {quest_data['prerequisite']}")
+    print(f"Reward XP: {quest_data['reward_xp']}")
+    print(f"Reward Gold: {quest_data['reward_gold']}")
+
+
 
 def display_quest_list(quest_list):
     """
@@ -435,7 +439,17 @@ def display_quest_list(quest_list):
     Shows: Title, Required Level, Rewards
     """
     # TODO: Implement quest list display
-    pass
+    
+    if not quest_list:
+        print("No quests to display.")
+        return
+    print("\n=== Available Quest ===")
+    #Prints each available quest
+    for quest in quest_list:
+        print(f"- {quest['title']} (Level {quest['required_level']})")
+        print(f"  Rewards: {quest['reward_xp']} XP, {quest['reward_gold']} Gold")
+        print()
+
 
 def display_character_quest_progress(character, quest_data_dict):
     """
@@ -448,7 +462,26 @@ def display_character_quest_progress(character, quest_data_dict):
     - Total rewards earned
     """
     # TODO: Implement progress display
-    pass
+    
+    # Counts the number of active quest for the character
+    active_count = len(character['active_quests'])
+
+    # Counts the number of quest the character has completed
+    completed_count = len(character['completed_quests'])
+
+    # Counts the percentage of the quest completed in the game
+    completion_percentage = get_quest_completion_percentage(character, quest_data_dict)
+
+    # Counts the amount of XP + gold earned from completed quests
+    total_rewards = get_total_quest_rewards_earned(character, quest_data_dict)
+
+    #Displays all of that information
+    print("\n=== QUEST PROGRESS ===")
+    print(f"Active Quests: {active_count}")
+    print(f"Completed Quests: {completed_count}")
+    print(f"Completion: {completion_percentage:.2f}%")
+    print(f"Total XP Earned: {total_rewards['total_xp']}")
+    print(f"Total Gold Earned: {total_rewards['total_gold']}")
 
 # ============================================================================
 # VALIDATION
@@ -466,7 +499,24 @@ def validate_quest_prerequisites(quest_data_dict):
     # TODO: Implement prerequisite validation
     # Check each quest's prerequisite
     # Ensure prerequisite exists in quest_data_dict
-    pass
+    
+    # Loops through every quest in the dictionary
+    #.item lets you look at the key and value at the same time
+    for quest_id, quest in quest_data_dict.items():
+
+        prereq = quest['prerequisite']  # Shows prerequisites for quest
+
+        # If quest has no prerequisite then skip it
+        if prereq == "NONE":
+            continue
+
+        # If prerequisite name is not found in the list of quests
+        if prereq not in quest_data_dict:
+            raise QuestNotFoundError(
+                f"Prerequisite '{prereq}' for quest '{quest_id}' does not exist."
+            )
+
+    return True
 
 
 # ============================================================================
@@ -477,29 +527,29 @@ if __name__ == "__main__":
     print("=== QUEST HANDLER TEST ===")
     
     # Test data
-    # test_char = {
-    #     'level': 1,
-    #     'active_quests': [],
-    #     'completed_quests': [],
-    #     'experience': 0,
-    #     'gold': 100
-    # }
-    #
-    # test_quests = {
-    #     'first_quest': {
-    #         'quest_id': 'first_quest',
-    #         'title': 'First Steps',
-    #         'description': 'Complete your first quest',
-    #         'reward_xp': 50,
-    #         'reward_gold': 25,
-    #         'required_level': 1,
-    #         'prerequisite': 'NONE'
-    #     }
-    # }
-    #
-    # try:
-    #     accept_quest(test_char, 'first_quest', test_quests)
-    #     print("Quest accepted!")
-    # except QuestRequirementsNotMetError as e:
-    #     print(f"Cannot accept: {e}")
+    test_char = {
+        'level': 1,
+        'active_quests': [],
+        'completed_quests': [],
+        'experience': 0,
+        'gold': 100
+    }
+    
+    test_quests = {
+        'first_quest': {
+            'quest_id': 'first_quest',
+            'title': 'First Steps',
+            'description': 'Complete your first quest',
+            'reward_xp': 50,
+            'reward_gold': 25,
+            'required_level': 1,
+            'prerequisite': 'NONE'
+        }
+    }
+    
+    try:
+        accept_quest(test_char, 'first_quest', test_quests)
+        print("Quest accepted!")
+    except QuestRequirementsNotMetError as e:
+        print(f"Cannot accept: {e}")
 
