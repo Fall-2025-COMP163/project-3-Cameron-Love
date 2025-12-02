@@ -5,7 +5,7 @@ Inventory System Module - Starter Code
 Name: Cameron Love
 
 
-AI Usage: [Document any AI assistance used]
+AI Usage: Needed help with the equip_armor function 
 
 This module handles inventory management, item usage, and equipment.
 """

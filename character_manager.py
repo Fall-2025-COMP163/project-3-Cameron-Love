@@ -4,7 +4,7 @@ Character Manager Module - Starter Code
 
 Name: Cameron Love
 
-AI Usage: [Document any AI assistance used]
+AI Usage: Used AI to greater understand file structure and adding to files.
 
 This module handles character creation, loading, and saving.
 """

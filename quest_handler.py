@@ -5,8 +5,7 @@ Quest Handler Module - Starter Code
 Name: Cameron Love
 
 
-AI Usage: [Document any AI assistance used]
-
+AI Usage: Helped me understand how to handle prerequisite quest
 This module handles quest management, dependencies, and completion.
 """
 

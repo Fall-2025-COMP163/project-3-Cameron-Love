@@ -686,7 +686,7 @@ def handle_character_death():
             # Revive using character_manager
             character_manager.revive_character(current_character)
 
-            print("✨ You have been revived at 50% HP!")
+            print("You have been revived at 50% HP!")
             return  # go back to game loop
 
         # ---- Option 2: Quit ----

@@ -4,7 +4,7 @@ Combat System Module - Starter Code
 
 Name: Cameron Love
 
-AI Usage: [Document any AI assistance used]
+AI Usage: Used AI to better understand how to approach Simple Battle class.
 
 Handles combat mechanics
 """
