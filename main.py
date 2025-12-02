@@ -2,7 +2,8 @@
 COMP 163 - Project 3: Quest Chronicles
 Main Game Module - Starter Code
 
-Name: [Your Name Here]
+Name: Cameron Love
+
 
 AI Usage: [Document any AI assistance used]
 
