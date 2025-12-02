@@ -204,7 +204,45 @@ def equip_weapon(character, item_id, item_data):
     # Parse effect and apply to character stats
     # Store equipped_weapon in character dictionary
     # Remove item from inventory
-    pass
+    
+    # Must have item
+    if item_id not in character["inventory"]:
+        raise ItemNotFoundError(f"{item_id} not found in inventory.")
+
+    # Must be a weapon
+    if item_data["type"] != "weapon":
+        raise InvalidItemTypeError(f"{item_id} is not a weapon.")
+
+    # If a weapon is already equipped → unequip it
+    if "equipped_weapon" in character and character["equipped_weapon"] is not None:
+        
+        old_weapon_id = character["equipped_weapon"]
+
+        # Remove old weapon stat bonus
+        if "equipped_weapon_effect" in character:
+            old_stat, old_value = character["equipped_weapon_effect"]
+            apply_stat_effect(character, old_stat, -old_value)
+
+        # Add old weapon back to inventory
+        if len(character["inventory"]) >= MAX_INVENTORY_SIZE:
+            raise InventoryFullError("No space to unequip old weapon.")
+
+        character["inventory"].append(old_weapon_id)
+
+    # Parse new weapon effect
+    stat_name, value = parse_item_effect(item_data["effect"])
+
+    # Apply effect
+    apply_stat_effect(character, stat_name, value)
+
+    # Store new weapon
+    character["equipped_weapon"] = item_id
+    character["equipped_weapon_effect"] = (stat_name, value)
+
+    # Remove from inventory
+    character["inventory"].remove(item_id)
+
+    return f"You equipped {item_id} (+{value} {stat_name})."
 
 def equip_armor(character, item_id, item_data):
     """
@@ -228,7 +266,52 @@ def equip_armor(character, item_id, item_data):
     """
     # TODO: Implement armor equipping
     # Similar to equip_weapon but for armor
-    pass
+    
+    #Must have the item
+    if item_id not in character["inventory"]:
+        raise ItemNotFoundError(f"{item_id} not found in inventory.")
+
+    #Must be armor
+    if item_data["type"] != "armor":
+        raise InvalidItemTypeError(f"{item_id} is not armor.")
+
+    #If armor is already equipped → unequip it
+    if "equipped_armor" in character and character["equipped_armor"] is not None:
+        old_armor_id = character["equipped_armor"]
+        old_armor_data = item_data["all_items"][old_armor_id] if "all_items" in item_data else None
+
+        #Remove old armor stat bonus
+        if old_armor_data:
+            stat_name, value = parse_item_effect(old_armor_data["effect"])
+            apply_stat_effect(character, stat_name, -value)
+
+            #Clamp current health if max_health dropped below health
+            if stat_name == "max_health" and character["health"] > character["max_health"]:
+                character["health"] = character["max_health"]
+
+        #Add old armor back to inventory
+        if len(character["inventory"]) >= MAX_INVENTORY_SIZE:
+            raise InventoryFullError("No space to unequip old armor.")
+
+        character["inventory"].append(old_armor_id)
+
+    #Parse new armor effect
+    stat_name, value = parse_item_effect(item_data["effect"])
+
+    #Apply new armor stats
+    apply_stat_effect(character, stat_name, value)
+
+    #Clamp health again if max_health changed
+    if stat_name == "max_health" and character["health"] > character["max_health"]:
+        character["health"] = character["max_health"]
+
+    #Save new armor as equipped
+    character["equipped_armor"] = item_id
+
+    #Remove the item from inventory
+    character["inventory"].remove(item_id)
+
+    return f"You equipped {item_data['name']} (+{value} {stat_name})."
 
 def unequip_weapon(character):
     """
@@ -242,7 +325,36 @@ def unequip_weapon(character):
     # Remove stat bonuses
     # Add weapon back to inventory
     # Clear equipped_weapon from character
-    pass
+    
+    #Check if any weapon is equipped
+    if "equipped_weapon" not in character or character["equipped_weapon"] is None:
+        #nothing to unequip
+        return None
+
+    weapon_id = character["equipped_weapon"]
+
+    #Fetch weapon data
+    #In game, ALL item_data lives in game_data
+    #So equipped items MUST be referenced from there.
+    #We'll assume character stores a reference to ALL item data.
+    weapon_data = character["all_items"][weapon_id]
+
+    #Removes stat bonus from character
+    stat_name, value = parse_item_effect(weapon_data["effect"])
+    apply_stat_effect(character, stat_name, -value)   # subtract the bonus
+
+    #Inventorys must have space to store unequipped weapon
+    if len(character["inventory"]) >= MAX_INVENTORY_SIZE:
+        raise InventoryFullError("No space to return unequipped weapon.")
+
+    #Adds weapon back to inventory
+    character["inventory"].append(weapon_id)
+
+    #Clears equipped_weapon
+    character["equipped_weapon"] = None
+
+    #Returns the weapon ID that was unequipped
+    return weapon_id
 
 def unequip_armor(character):
     """
@@ -252,7 +364,40 @@ def unequip_armor(character):
     Raises: InventoryFullError if inventory is full
     """
     # TODO: Implement armor unequipping
-    pass
+    
+    #Check if armor is equipped
+    if "equipped_armor" not in character or character["equipped_armor"] is None:
+        #nothing to unequip
+        return None 
+
+    armor_id = character["equipped_armor"]
+
+    #Fetch armor data from all_items
+    armor_data = character["all_items"][armor_id]
+
+    #Remove stat bonus
+    stat_name, value = parse_item_effect(armor_data["effect"])
+
+    #Subtract the armor's stat bonus
+    apply_stat_effect(character, stat_name, -value)
+
+    #If max_health dropped below current health → clamp
+    if stat_name == "max_health" and character["health"] > character["max_health"]:
+        character["health"] = character["max_health"]
+
+    #Ensure inventory has space
+    if len(character["inventory"]) >= MAX_INVENTORY_SIZE:
+        raise InventoryFullError("No space to return unequipped armor.")
+
+    #Add armor back to inventory
+    character["inventory"].append(armor_id)
+
+    #Clear the equipped armor slot
+    character["equipped_armor"] = None
+
+    #Return the unequipped armor's ID
+    return armor_id
+
 
 # ============================================================================
 # SHOP SYSTEM
@@ -277,7 +422,25 @@ def purchase_item(character, item_id, item_data):
     # Check if inventory has space
     # Subtract gold from character
     # Add item to inventory
-    pass
+    
+    cost = item_data["cost"]
+
+    #Check gold
+    if character["gold"] < cost:
+        raise InsufficientResourcesError("Not enough gold to purchase this item.")
+
+    #Check inventory space
+    if len(character["inventory"]) >= MAX_INVENTORY_SIZE:
+        raise InventoryFullError("Inventory is full.")
+
+    #Subtract gold
+    character["gold"] -= cost
+
+    #Add item to inventory
+    character["inventory"].append(item_id)
+
+    return True
+
 
 def sell_item(character, item_id, item_data):
     """
@@ -296,7 +459,23 @@ def sell_item(character, item_id, item_data):
     # Calculate sell price (cost // 2)
     # Remove item from inventory
     # Add gold to character
-    pass
+    
+    #Checks if character owns the item
+    if item_id not in character["inventory"]:
+        raise ItemNotFoundError(f"{item_id} not found in inventory.")
+
+    #Determines selling price
+    sell_price = item_data["cost"] // 2
+
+    #Removes the item from inventory
+    character["inventory"].remove(item_id)
+
+    #Adds gold to the character
+    character["gold"] += sell_price
+
+    #Returns the amount earned
+    return sell_price
+
 
 # ============================================================================
 # HELPER FUNCTIONS
