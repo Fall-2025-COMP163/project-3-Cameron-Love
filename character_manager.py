@@ -381,7 +381,21 @@ def heal_character(character, amount):
     # TODO: Implement healing
     # Calculate actual healing (don't exceed max_health)
     # Update character health
-    pass
+   
+    # The current health amount
+    current = character["health"]
+    max_hp = character["max_health"]
+
+    # Caps the new health at the max health of the character if it happends to exceed that amount
+    new_health = min(current + amount, max_hp)
+
+    # Calculates the amount healed
+    healed_amount = new_health - current
+
+    # This updates the character's health
+    character["health"] = new_health
+
+    return healed_amount
 
 def is_character_dead(character):
     """
@@ -428,7 +442,38 @@ def validate_character_data(character):
     # Check all required keys exist
     # Check that numeric values are numbers
     # Check that lists are actually lists
-    pass
+    
+    required_fields = [
+        "name", "class", "level", "health", "max_health",
+        "strength", "magic", "experience", "gold",
+        "inventory", "active_quests", "completed_quests"
+    ]
+
+    #Check all required keys exist
+    for key in required_fields:
+        if key not in character:
+            raise InvalidSaveDataError(f"Missing field: {key}")
+
+    #Check numerical fields
+    numeric_fields = [
+        "level", "health", "max_health",
+        "strength", "magic", "experience", "gold"
+    ]
+
+    for key in numeric_fields:
+        if not isinstance(character[key], int):
+            raise InvalidSaveDataError(f"Invalid numeric value for {key}")
+
+    #Check list fields
+    list_fields = ["inventory", "active_quests", "completed_quests"]
+
+    for key in list_fields:
+        if not isinstance(character[key], list):
+            raise InvalidSaveDataError(f"{key} must be a list")
+
+    return True
+
+
 
 # ============================================================================
 # TESTING
@@ -438,26 +483,26 @@ if __name__ == "__main__":
     print("=== CHARACTER MANAGER TEST ===")
     
     # Test character creation
-    # try:
-    #     char = create_character("TestHero", "Warrior")
-    #     print(f"Created: {char['name']} the {char['class']}")
-    #     print(f"Stats: HP={char['health']}, STR={char['strength']}, MAG={char['magic']}")
-    # except InvalidCharacterClassError as e:
-    #     print(f"Invalid class: {e}")
+    try:
+        char = create_character("TestHero", "Warrior")
+        print(f"Created: {char['name']} the {char['class']}")
+        print(f"Stats: HP={char['health']}, STR={char['strength']}, MAG={char['magic']}")
+    except InvalidCharacterClassError as e:
+        print(f"Invalid class: {e}")
     
     # Test saving
-    # try:
-    #     save_character(char)
-    #     print("Character saved successfully")
-    # except Exception as e:
-    #     print(f"Save error: {e}")
+    try:
+        save_character(char)
+        print("Character saved successfully")
+    except Exception as e:
+        print(f"Save error: {e}")
     
     # Test loading
-    # try:
-    #     loaded = load_character("TestHero")
-    #     print(f"Loaded: {loaded['name']}")
-    # except CharacterNotFoundError:
-    #     print("Character not found")
-    # except SaveFileCorruptedError:
-    #     print("Save file corrupted")
+    try:
+        loaded = load_character("TestHero")
+        print(f"Loaded: {loaded['name']}")
+    except CharacterNotFoundError:
+        print("Character not found")
+    except SaveFileCorruptedError:
+        print("Save file corrupted")
 
